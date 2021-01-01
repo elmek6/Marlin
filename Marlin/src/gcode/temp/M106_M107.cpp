@@ -40,12 +40,16 @@
   #define _CNT_P FAN_COUNT
 #endif
 
+static bool fan_speed_override; /// Override fan speed
+
+
 /**
  * M106: Set Fan Speed
  *
  *  I<index> Material Preset index (if material presets are defined)
  *  S<int>   Speed between 0-255
  *  P<index> Fan index, if more than one fan
+ *  O<bool>  Override fan speed 0=off, 1=on
  *
  * With EXTRA_FAN_SPEED enabled:
  *
@@ -58,6 +62,11 @@ void GcodeSuite::M106() {
   const uint8_t pfan = parser.byteval('P', _ALT_P);
 
   if (pfan < _CNT_P) {
+    
+    if (parser.seenval('O'))
+      fan_speed_override = parser.intval('O');
+    else if (fan_speed_override) 
+      return;
 
     #if ENABLED(EXTRA_FAN_SPEED)
       const uint16_t t = parser.intval('T');
@@ -90,6 +99,7 @@ void GcodeSuite::M106() {
 void GcodeSuite::M107() {
   const uint8_t p = parser.byteval('P', _ALT_P);
   thermalManager.set_fan_speed(p, 0);
+  fan_speed_override = false;
 }
 
 #endif // HAS_FAN
